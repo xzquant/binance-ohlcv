@@ -5,27 +5,33 @@ import pandas as pd
 import datetime
 import os
 import logging
+import asyncio
+
+from ._async import run_async
 
 logger = logging.getLogger(__name__)
 
 
 def get_spot(symbol, timeframe, start, end):
-    return get("spot", symbol, timeframe, start, end)
+    return run_async(get, "spot", symbol, timeframe, start, end)
 
 
 def get_futures_um(symbol, timeframe, start, end):
-    return get("futures/um", symbol, timeframe, start, end)
+    return run_async(get, "futures/um", symbol, timeframe, start, end)
 
 
 def get_futures_cm(symbol, timeframe, start, end):
-    return get("futures/cm", symbol, timeframe, start, end)
+    return run_async(get, "futures/cm", symbol, timeframe, start, end)
 
 
-def get(type, symbol, timeframe, start, end):
-    dfs = [
-        get_daily_ohlcv(type, symbol, timeframe, date)
-        for date in date_range(start, end)
-    ]
+async def get(type, symbol, timeframe, start, end):
+    async with httpx.AsyncClient() as client:
+        dfs = await asyncio.gather(
+            *[
+                get_daily_ohlcv(type, symbol, timeframe, date, client)
+                for date in date_range(start, end)
+            ]
+        )
     return pd.concat(dfs)
 
 
@@ -50,11 +56,11 @@ def daily_path(type, symbol, timeframe, date):
     return path
 
 
-def get_daily_ohlcv(type, symbol, timeframe, date):
+async def get_daily_ohlcv(type, symbol, timeframe, date, client):
     try:
         df = get_daily_ohlcv_from_disk(type, symbol, timeframe, date)
     except FileNotFoundError:
-        df = get_daily_ohlcv_from_binance(type, symbol, timeframe, date)
+        df = await get_daily_ohlcv_from_binance(type, symbol, timeframe, date, client)
         path = daily_path(type, symbol, timeframe, date)
         os.makedirs(os.path.dirname(path), exist_ok=True)
         df.to_pickle(path)
@@ -69,7 +75,9 @@ def get_daily_ohlcv_from_disk(type, symbol, timeframe, date: datetime.date):
     return df
 
 
-def get_daily_ohlcv_from_binance(type, symbol, timeframe, date: datetime.date):
+async def get_daily_ohlcv_from_binance(
+    type, symbol, timeframe, date: datetime.date, client
+):
     # https://github.com/binance/binance-public-data
 
     # example urls:
@@ -79,7 +87,7 @@ def get_daily_ohlcv_from_binance(type, symbol, timeframe, date: datetime.date):
 
     logger.debug(f"fetch from binance: {url}")
 
-    resp = httpx.get(url)
+    resp = await client.get(url)
     resp.raise_for_status()
     with zipfile.ZipFile(io.BytesIO(resp.content)) as zipf:
         assert len(zipf.namelist()) == 1
