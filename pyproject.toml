@@ -1,6 +1,6 @@
 [project]
 name = "binance-ohlcv"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Get OHLCV/klines/candlesticks data from binance."
 authors = [
     {name = "Meng Xiangzhuo", email = "aumo@foxmail.com"},
@@ -16,6 +16,9 @@ license = {text = "MIT"}
 [build-system]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
+
+[tool.pdm.version]
+source = "scm"
 
 [tool.pdm.dev-dependencies]
 dev = [
