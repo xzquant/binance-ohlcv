@@ -26,6 +26,7 @@ def get_futures_cm(symbol, timeframe, start, end):
 
 async def get(type, symbol, timeframe, start, end):
     async with httpx.AsyncClient() as client:
+        # TODO do we need to control the concurrency ?
         dfs = await asyncio.gather(
             *[
                 get_daily_ohlcv(type, symbol, timeframe, date, client)
