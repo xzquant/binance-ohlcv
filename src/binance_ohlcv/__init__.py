@@ -41,8 +41,11 @@ def date2str(date: datetime.date):
 
 
 def daily_path(type, symbol, timeframe, date):
+    cache_dir = os.environ.get(
+        "BINANCE_OHLCV_CACHE_DIR", os.path.expanduser("~/.binance-ohlcv")
+    )
     path = os.path.expanduser(
-        f"~/.binance-ohlcv/{type}/{symbol}/{timeframe}/{date2str(date)}.pkl"
+        f"{cache_dir}/{type}/{symbol}/{timeframe}/{date2str(date)}.pkl"
     )
     return path
 
@@ -67,9 +70,11 @@ def get_daily_ohlcv_from_disk(type, symbol, timeframe, date: datetime.date):
 
 
 def get_daily_ohlcv_from_binance(type, symbol, timeframe, date: datetime.date):
+    # https://github.com/binance/binance-public-data
+
     # example urls:
-    # https://data.binance.vision/data/spot/daily/klines/BTCUSDT/1s/BTCUSDT-1s-2023-10-27.zip
-    # https://data.binance.vision/data/futures/um/daily/klines/BTCUSDT/1h/BTCUSDT-1h-2023-10-27.zip
+    #  https://data.binance.vision/data/spot/daily/klines/BTCUSDT/1s/BTCUSDT-1s-2023-10-27.zip
+    #  https://data.binance.vision/data/futures/um/daily/klines/BTCUSDT/1h/BTCUSDT-1h-2023-10-27.zip
     url = f"https://data.binance.vision/data/{type}/daily/klines/{symbol}/{timeframe}/{symbol}-{timeframe}-{date2str(date)}.zip"
 
     logger.debug(f"fetch from binance: {url}")
@@ -79,12 +84,21 @@ def get_daily_ohlcv_from_binance(type, symbol, timeframe, date: datetime.date):
     with zipfile.ZipFile(io.BytesIO(resp.content)) as zipf:
         assert len(zipf.namelist()) == 1
         with zipf.open(zipf.namelist()[0]) as csvf:
+
+            # https://github.com/binance/binance-public-data/issues/283
+            first_byte = csvf.read(1)[0]
+            if chr(first_byte).isdigit():
+                header = None
+            else:
+                header = 0
+            csvf.seek(0)
+
             df = pd.read_csv(
                 csvf,
                 usecols=[0, 1, 2, 3, 4, 5],
                 names=["timestamp", "open", "high", "low", "close", "volume"],
-                header=None if type == "spot" else 0,
+                header=header,
             )
-            df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
+            df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms", utc=True)
             df.set_index("timestamp", inplace=True)
             return df
