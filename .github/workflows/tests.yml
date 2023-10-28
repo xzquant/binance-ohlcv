@@ -1,4 +1,4 @@
-name: CI
+name: Run tests
 on: [push]
 jobs:
   Run-Lints-and-Tests:
@@ -18,10 +18,6 @@ jobs:
       - name: Install dependencies
         run: |
           pdm sync -d
-
-      - name: Run Lints
-        run: |
-          pdm run -v pylint src tests
 
       - name: Run Tests
         run: |
