@@ -1,4 +1,9 @@
 # binance-ohlcv
+
+[![Run tests](https://github.com/decotra/binance-ohlcv/actions/workflows/tests.yml/badge.svg)](https://github.com/decotra/binance-ohlcv/actions/workflows/tests.yml)
+[![codecov](https://codecov.io/gh/decotra/binance-ohlcv/graph/badge.svg?token=FKXYXZDQF5)](https://codecov.io/gh/decotra/binance-ohlcv)
+[![PyPI version](https://badge.fury.io/py/binance-ohlcv.svg)](https://badge.fury.io/py/binance-ohlcv)
+
 Get OHLCV data from binance.
 
 ## Installation
