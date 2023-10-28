@@ -1,0 +1,21 @@
+[project]
+name = "binance-ohlcv"
+version = "0.1.0"
+description = "Get OHLCV/klines/candlesticks data from binance."
+authors = [
+    {name = "Meng Xiangzhuo", email = "aumo@foxmail.com"},
+]
+dependencies = []
+requires-python = ">=3.8"
+readme = "README.md"
+license = {text = "MIT"}
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "pytest>=7.4.3",
+    "pylint>=3.0.2",
+]
