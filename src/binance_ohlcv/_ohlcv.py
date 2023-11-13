@@ -93,7 +93,6 @@ async def get_daily_ohlcv_from_binance(
     with zipfile.ZipFile(io.BytesIO(resp.content)) as zipf:
         assert len(zipf.namelist()) == 1
         with zipf.open(zipf.namelist()[0]) as csvf:
-
             # https://github.com/binance/binance-public-data/issues/283
             first_byte = csvf.read(1)[0]
             if chr(first_byte).isdigit():
